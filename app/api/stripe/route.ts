@@ -1,16 +1,17 @@
-import prismaDB from "@/lib/prisma-db";
-import { stripe } from "@/lib/stripe";
-import { absoluteUrl } from "@/lib/utils";
 import { auth, currentUser } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
-import { toast } from "react-hot-toast";
 
-const settingUrl = absoluteUrl("/settings");
+import { stripe } from "@/lib/stripe";
+import { absoluteUrl } from "@/lib/utils";
+import prismaDB from "@/lib/prisma-db";
 
-export async function GET(req: Request) {
+const settingsUrl = absoluteUrl("/settings");
+
+export async function GET() {
   try {
     const { userId } = auth();
     const user = await currentUser();
+
     if (!userId || !user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -24,13 +25,15 @@ export async function GET(req: Request) {
     if (userSubscription && userSubscription.stripeCustomerId) {
       const stripeSession = await stripe.billingPortal.sessions.create({
         customer: userSubscription.stripeCustomerId,
-        return_url: settingUrl,
+        return_url: settingsUrl,
       });
+
       return new NextResponse(JSON.stringify({ url: stripeSession.url }));
     }
+
     const stripeSession = await stripe.checkout.sessions.create({
-      success_url: settingUrl,
-      cancel_url: settingUrl,
+      success_url: settingsUrl,
+      cancel_url: settingsUrl,
       payment_method_types: ["card"],
       mode: "subscription",
       billing_address_collection: "auto",
@@ -41,7 +44,7 @@ export async function GET(req: Request) {
             currency: "USD",
             product_data: {
               name: "Genius Pro",
-              description: "Unlimited AI Generations.",
+              description: "Unlimited AI Generations",
             },
             unit_amount: 2000,
             recurring: {
@@ -55,10 +58,10 @@ export async function GET(req: Request) {
         userId,
       },
     });
-    return new NextResponse(JSON.stringify({url:stripeSession.url}))
-  } catch (error: any) {
-    toast.error('Stripe error')
 
+    return new NextResponse(JSON.stringify({ url: stripeSession.url }));
+  } catch (error) {
+    console.log("[STRIPE_ERROR]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
