@@ -7,8 +7,9 @@ import { useEffect, useState } from "react";
 
 interface MobileSidebarProps{
   freeTrial:number;
+  isPro:boolean;
 }
-const MobileSidebar = ({freeTrial}:MobileSidebarProps) => {
+const MobileSidebar = ({freeTrial=0, isPro=false}:MobileSidebarProps) => {
   const [isMounted,setIsMounted] =useState(false);
   useEffect(()=>{
     setIsMounted(true)
@@ -24,7 +25,7 @@ const MobileSidebar = ({freeTrial}:MobileSidebarProps) => {
         </Button>
       </SheetTrigger>
       <SheetContent className="p-0" side={'left'}>
-        <Sidebar freeTrial={freeTrial}/>
+        <Sidebar freeTrial={freeTrial} isPro={isPro}/>
       </SheetContent>
     </Sheet>
   );
